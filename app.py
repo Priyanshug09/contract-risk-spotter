@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import anthropic
 import json
@@ -9,8 +10,8 @@ st.caption("Enterprise-grade AI for IT Agencies.")
 
 SYSTEM_PROMPT = """You are a ruthless legal analyst for IT agencies. Read the document and identify risky clauses. If it limits liability, forces auto-renewal, or assigns IP unfairly, tag HIGH RISK. If unusual but manageable, tag MEDIUM RISK. Output ONLY a JSON array of objects with keys: risk_level, summary, citation, raw_quote. No markdown."""
 
-# YOUR PRIVATE KEY (Safe because repo is Private)
-API_KEY = "sk-ant-dummy-key-for-github"
+# This looks for the real key in Streamlit Cloud. If it can't find it, it uses a fake one.
+API_KEY = os.getenv("ANTHROPIC_API_KEY", "sk-ant-dummy-key-for-github") 
 
 uploaded_file = st.file_uploader("Upload Contract (Max 50 pages)", type=["pdf"])
 
@@ -35,7 +36,6 @@ if st.button("Analyze Contract", type="primary") and uploaded_file:
             if text.startswith("```"): text = text.split("\n", 1)[1].rsplit("```", 1)[0]
             risks = json.loads(text)
             
-            # --- ENTERPRISE UI ---
             high_count = sum(1 for r in risks if r["risk_level"] == "HIGH RISK")
             med_count = sum(1 for r in risks if r["risk_level"] == "MEDIUM RISK")
             
