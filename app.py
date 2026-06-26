@@ -5,19 +5,21 @@ import base64
 
 st.set_page_config(page_title="Contract Risk Spotter", layout="wide")
 st.title("⚖️ Contract Risk Spotter")
-st.caption("Built for IT Agencies.")
+st.caption("Enterprise-grade AI for IT Agencies.")
 
 SYSTEM_PROMPT = """You are a ruthless legal analyst for IT agencies. Read the document and identify risky clauses. If it limits liability, forces auto-renewal, or assigns IP unfairly, tag HIGH RISK. If unusual but manageable, tag MEDIUM RISK. Output ONLY a JSON array of objects with keys: risk_level, summary, citation, raw_quote. No markdown."""
 
-api_key = st.text_input("Enter Anthropic API Key:", type="password")
-uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
+# YOUR PRIVATE KEY (Safe because repo is Private)
+API_KEY = "sk-ant-dummy-key-for-github"
 
-if st.button("Analyze") and uploaded_file and api_key:
-    with st.spinner("Analyzing..."):
+uploaded_file = st.file_uploader("Upload Contract (Max 50 pages)", type=["pdf"])
+
+if st.button("Analyze Contract", type="primary") and uploaded_file:
+    with st.spinner("Analyzing document..."):
         try:
             pdf_bytes = uploaded_file.read()
             pdf_b64 = base64.standard_b64encode(pdf_bytes).decode("utf-8")
-            client = anthropic.Anthropic(api_key=api_key)
+            client = anthropic.Anthropic(api_key=API_KEY)
             
             msg = client.messages.create(
                 model="claude-sonnet-4-6",
@@ -30,17 +32,17 @@ if st.button("Analyze") and uploaded_file and api_key:
             )
             
             text = msg.content[0].text.strip()
-            if text.startswith("```"):
-                text = text.split("\n", 1)[1].rsplit("```", 1)[0]
+            if text.startswith("```"): text = text.split("\n", 1)[1].rsplit("```", 1)[0]
             risks = json.loads(text)
             
+            # --- ENTERPRISE UI ---
             high_count = sum(1 for r in risks if r["risk_level"] == "HIGH RISK")
             med_count = sum(1 for r in risks if r["risk_level"] == "MEDIUM RISK")
             
             st.markdown("---")
             col1, col2, col3 = st.columns(3)
-            col1.metric(label="Total Risks Found", value=len(risks))
-            col2.metric(label="High Risk", value=high_count, delta="Needs Attention")
+            col1.metric(label="Total Risks", value=len(risks))
+            col2.metric(label="High Risk", value=high_count, delta="Danger")
             col3.metric(label="Medium Risk", value=med_count)
             st.markdown("---")
             
