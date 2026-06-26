@@ -31,10 +31,29 @@ if st.button("Analyze") and uploaded_file and api_key:
             
             text = msg.content[0].text.strip()
             if text.startswith("```"): text = text.split("\n", 1)[1].rsplit("```", 1)[0]
-            risks = json.loads(text)
+                        risks = json.loads(text)
             
-            st.success(f"Found {len(risks)} risks.")
+            # --- ENTERPRISE UI UPGRADE ---
+            high_count = sum(1 for r in risks if r["risk_level"] == "HIGH RISK")
+            med_count = sum(1 for r in risks if r["risk_level"] == "MEDIUM RISK")
+            
+            st.markdown("---")
+            col1, col2, col3 = st.columns(3)
+            col1.metric(label="Total Risks Found", value=len(risks))
+            col2.metric(label="High Risk", value=high_count, delta="Needs Attention")
+            col3.metric(label="Medium Risk", value=med_count)
+            st.markdown("---")
+            
             for r in risks:
+                if r["risk_level"] == "HIGH RISK":
+                    st.error(f"**{r['risk_level']}** | 📌 {r['citation']}")
+                else:
+                    st.warning(f"**{r['risk_level']}** | 📌 {r['citation']}")
+                    
+                st.write(r["summary"])
+                with st.expander("View Raw Proof"):
+                    st.text(r["raw_quote"])
+                st.divider()
                 color = "🔴" if r["risk_level"] == "HIGH RISK" else "🟡"
                 st.markdown(f"### {color} {r['risk_level']}")
                 st.write(r["summary"])
